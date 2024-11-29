@@ -1,0 +1,86 @@
+@startuml
+!define RECTANGLE class
+
+' Definición de los elementos de AWS y ESP32
+package "ESP32 (Microcontrolador)" {
+    RECTANGLE "Sensor Module" as sensorModule {
+        + readTemperature()
+        + readLux()
+    }
+
+    RECTANGLE "Actuator Module" as actuatorModule {
+        + activateValve()
+        + deactivateValve()
+        + openBlinds()
+        + closeBlinds()
+    }
+
+    RECTANGLE "MQTT Communication" as mqttComm {
+        + publishToAWS()
+        + subscribeToAWS()
+    }
+}
+
+' AWS IoT Core para la gestión de la comunicación
+package "AWS IoT Core" {
+    RECTANGLE "Device Shadows" as deviceShadows {
+        + storeDeviceState()
+        + getDeviceState()
+    }
+    RECTANGLE "Rule Engine" as ruleEngine {
+        + triggerActionsBasedOnRules()
+    }
+}
+
+' AWS Lambda para procesar eventos
+package "AWS Lambda" {
+    RECTANGLE "Process Sensor Data" as lambdaSensorData {
+        + processTemperatureData()
+        + processLuxData()
+    }
+    RECTANGLE "Control Actuators" as lambdaControlActuators {
+        + activateValve()
+        + deactivateValve()
+        + openBlinds()
+        + closeBlinds()
+    }
+}
+
+' DynamoDB para almacenar datos
+package "AWS DynamoDB" {
+    RECTANGLE "Device State Table" as deviceStateTable {
+        + storeTemperatureState()
+        + storeLuxState()
+        + storeActuatorState()
+    }
+}
+
+' Alexa para consultar/activar el sistema
+package "Amazon Alexa" {
+    RECTANGLE "Alexa Skill" as alexaSkill {
+        + queryDeviceState()
+        + triggerActuators()
+    }
+}
+
+' Conexiones entre los componentes
+sensorModule -down-> mqttComm : "Publicar datos de sensores"
+actuatorModule -down-> mqttComm : "Recibir comandos de actuadores"
+
+mqttComm -down-> deviceShadows : "Actualizar estado del dispositivo"
+mqttComm -down-> ruleEngine : "Enviar datos para procesamiento de reglas"
+
+ruleEngine -down-> lambdaSensorData : "Procesar datos de sensores"
+ruleEngine -down-> lambdaControlActuators : "Activar/desactivar actuadores"
+
+lambdaControlActuators -down-> actuatorModule : "Controlar actuadores"
+
+deviceShadows -down-> lambdaSensorData : "Obtener estado actual del dispositivo"
+deviceShadows -down-> lambdaControlActuators : "Actualizar estado del actuador"
+
+alexaSkill -down-> lambdaControlActuators : "Activar actuadores por voz"
+alexaSkill -down-> lambdaSensorData : "Consultar datos de sensores"
+
+lambdaSensorData -down-> deviceStateTable : "Guardar datos en DynamoDB"
+lambdaControlActuators -down-> deviceStateTable : "Actualizar estado en DynamoDB"
+@enduml

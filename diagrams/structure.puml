@@ -1,0 +1,60 @@
+@startuml
+
+!define RECTANGLE class
+
+' Definición de los módulos
+package "ESP32 (Microcontrolador)" {
+    RECTANGLE "Sensor Module" as sensorModule {
+        + readTemperature()
+        + readLux()
+    }
+
+    RECTANGLE "Actuator Module" as actuatorModule {
+        + activateValve()
+        + deactivateValve()
+        + openBlinds()
+        + closeBlinds()
+    }
+
+    RECTANGLE "MQTT Communication" as mqttComm {
+        + publishToAWS()
+        + subscribeToAWS()
+    }
+}
+
+' AWS Components
+package "AWS Cloud Components" {
+    RECTANGLE "AWS IoT Core" as iotCore {
+        + deviceShadows()
+        + ruleEngine()
+    }
+
+    RECTANGLE "AWS Lambda" as lambdaFunctions {
+        + processData()
+        + triggerActions()
+    }
+
+    RECTANGLE "Amazon DynamoDB" as dynamoDB {
+        + storeDeviceState()
+        + retrieveDeviceState()
+    }
+}
+
+' Comunicación entre ESP32 y AWS IoT Core
+sensorModule -down-> mqttComm : "Envía Datos de Sensores"
+actuatorModule -down-> mqttComm : "Recibe Comandos de Actuadores"
+mqttComm -down-> iotCore : "Publica y Subscripta a Topics"
+
+' AWS Lambda Functions Procesando Datos
+iotCore -down-> lambdaFunctions : "Invoca Lambda para procesamiento"
+lambdaFunctions -down-> dynamoDB : "Consulta/Actualiza Estado de Dispositivos"
+
+' Comunicación de Alexa con Lambda
+RECTANGLE "Amazon Alexa" as alexa {
+    + interactWithUser()
+    + requestDeviceState()
+}
+
+alexa -down-> lambdaFunctions : "Solicita Estado de Dispositivos"
+lambdaFunctions -down-> alexa : "Retorna Estado"
+@enduml
