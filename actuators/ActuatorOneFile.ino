@@ -1,20 +1,19 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
-#include <DHT.h>
+#include <ESP32Servo.h>
 #include <ArduinoJson.h>
 
-// Definimos los pines
-#define LDR_PIN 34         // Pin analógico para el LDR
-#define DHT_PIN  4         // Pin para el DHT11
-#define DHT_TYPE DHT11     // Tipo de sensor DHT
+// Definimos los pines para los servos
+#define SERVO_PERSIANAS_PIN 22 // Pin del servo para las persianas
+#define SERVO_RIEGO_PIN 23     // Pin del servo para la válvula de riego
 
 // Definimos las credenciales de WiFi y MQTT
-const char* WIFI_SSID = "JhonnP";
-const char* WIFI_PASS = "alberto1234";
-const char* MQTT_BROKER = "abkb9nclg5hh-ats.iot.us-east-1.amazonaws.com";
-const int MQTT_PORT = 8883;
-const char* CLIENT_ID = "ESP32_SENSOR";
+const char *WIFI_SSID = "JhonnP";
+const char *WIFI_PASS = "alberto1234";
+const char *MQTT_BROKER = "abkb9nclg5hh-ats.iot.us-east-1.amazonaws.com";
+const int MQTT_PORT = 8883; // 8883 es el puerto por defecto para MQTT seguro (SSL/TLS)
+const char *CLIENT_ID = "ESP32_ACTUADOR";
 
 // Certificado raíz de Amazon, certificado y clave privada
 const char AMAZON_ROOT_CA1[] PROGMEM = R"EOF(
@@ -93,83 +92,140 @@ GKK8bkkMqlPduhFrXjRDDqZM6ujT7dbUAfCB5YTzFfhFjDiEXhI=
 -----END RSA PRIVATE KEY-----
 )KEY";
 
-// Inicializamos el cliente WiFi y MQTT
-WiFiClientSecure wifiClient;
-PubSubClient client(wifiClient);
+// Tema para el estado reportado (actualización del estado)
+const char *REPORT_STATE_TOPIC = "$aws/things/greenhouse_0001/shadow/update/accepted";
 
-// Inicializamos el sensor DHT11
-DHT dht(DHT_PIN, DHT_TYPE);
+// Crear objetos de WiFi y MQTT
+WiFiClientSecure wiFiClient;
+PubSubClient client(wiFiClient);
 
-// Conectamos el sensor a la red WiFi
-void setup_wifi() {
-  Serial.begin(115200);
-  delay(10);
-  Serial.println();
-  Serial.print("Conectando a WiFi");
-  
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
+client.setServer(MQTT_BROKER, MQTT_PORT);
+client.setCallback(mqttCallback);
 
-  Serial.println("Conectado a WiFi");
-}
+// Crear objetos de servos
+Servo servoPersianas;
+Servo servoRiego;
 
-// Conectamos al servidor MQTT
-void reconnect() {
-  while (!client.connected()) {
-    Serial.print("Conectando a MQTT...");
-    
-    if (client.connect(CLIENT_ID, "unused", "unused")) {
-      Serial.println("Conectado a MQTT");
-    } else {
-      Serial.print("Error de conexión, rc=");
-      Serial.print(client.state());
-      delay(5000);
+// Variables de control para los servos
+unsigned long servoMoveStartTime = 0;
+bool isMovingPersianas = false;
+bool isMovingRiego = false;
+int servoPersianasPos = 0;
+int servoRiegoPos = 0;
+
+// Función para conectar a WiFi
+void connectWiFi()
+{
+    WiFi.begin(WIFI_SSID, WIFI_PASS);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(1000);
+        Serial.println("Conectando a WiFi...");
     }
-  }
+    Serial.println("Conectado a WiFi");
 }
 
-void setup() {
-  setup_wifi();
-  
-  // Conectar al broker MQTT
-  client.setServer(MQTT_BROKER, MQTT_PORT);
-  
-  // Iniciar el sensor DHT11
-  dht.begin();
-  
-  // Configurar la conexión segura de MQTT
-  wifiClient.setCACert(AMAZON_ROOT_CA1);
-  wifiClient.setCertificate(CERTIFICATE);
-  wifiClient.setPrivateKey(PRIVATE_KEY);
+// Función para conectar al broker MQTT
+void connectToMQTT()
+{
+    // Configuración de certificados de AWS IoT
+    wiFiClient.setCACert(AMAZON_ROOT_CA1);
+    wiFiClient.setCertificate(CERTIFICATE);
+    wiFiClient.setPrivateKey(PRIVATE_KEY);
+
+    while (!client.connected())
+    {
+        Serial.print("Conectando al broker MQTT...");
+        if (client.connect(CLIENT_ID))
+        {
+            Serial.println("Conectado al broker MQTT");
+        }
+        else
+        {
+            Serial.print("Error de conexión MQTT, rc=");
+            Serial.print(client.state());
+            Serial.println(" Reintentando...");
+            delay(5000);
+        }
+    }
 }
 
-void loop() {
-  if (!client.connected()) {
-    reconnect();
-  }
-  client.loop();
-  
-  // Leemos el estado del LDR (sensor de luz)
-  int ldrValue = analogRead(LDR_PIN); // Leemos el valor analógico
-  int ldrState = (ldrValue < 500) ? 1 : 0; // Si el valor es bajo, 0 (luz baja), si es alto, 1 (luz alta)
-  
-  // Leemos el estado del DHT11 (sensor de temperatura)
-  float temp = dht.readTemperature(); // Leemos la temperatura
-  int dhtState = (temp < 20.0) ? 0 : 1; // Si la temperatura es menor que 20°C, 0 (temperatura baja), de lo contrario, 1 (temperatura alta)
-  
-  StaticJsonDocument<200> jsonDoc;
-  jsonDoc["state"]["reported"]["luxState"] = ldrState;
-  jsonDoc["state"]["reported"]["tempState"] = dhtState;
-  
-  char jsonBuffer[512];
-  serializeJson(jsonDoc, jsonBuffer);
-  
-  // Publicar los estados en el tópico correspondiente
-  client.publish("$aws/things/greenhouse_0001/shadow/update", jsonBuffer);
+// Callback cuando se recibe un mensaje
+void callback(char *topic, byte *payload, unsigned int length)
+{
+    Serial.print("Mensaje recibido en el tópico: ");
+    Serial.println(topic);
 
-  // Esperar un momento antes de la siguiente lectura
-  delay(5000);  // 2 segundos
+    // Parsear el mensaje JSON
+    DynamicJsonDocument doc(1024);
+    deserializeJson(doc, payload);
+
+    // Extraer los estados de los sensores
+    int ventState = doc["state"]["reported"]["vent_state"];
+    int irrigationState = doc["state"]["reported"]["irrigation_state"];
+
+    // Imprimir los estados recibidos
+    Serial.print("vent_state: ");
+    Serial.println(ventState);
+    Serial.print("irrigation_state: ");
+    Serial.println(irrigationState);
+
+    // Controlar los servos en base a los estados
+    if (ventState == 1 && !isMovingPersianas)
+    {
+        Serial.println("Moviendo las persianas...");
+        servoPersianas.write(90); // Mover a posición 90 (abre las persianas)
+        isMovingPersianas = true;
+        servoMoveStartTime = millis(); // Guardar el tiempo de inicio del movimiento
+    }
+
+    if (irrigationState == 1 && !isMovingRiego)
+    {
+        Serial.println("Activando riego...");
+        servoRiego.write(90); // Mover a posición 90 (abre la válvula de riego)
+        isMovingRiego = true;
+        servoMoveStartTime = millis(); // Guardar el tiempo de inicio del movimiento
+    }
+}
+
+// Función para mover los servos durante un tiempo
+void moveServos()
+{
+    if (isMovingPersianas && millis() - servoMoveStartTime > 5000)
+    {                            // 5 segundos
+        servoPersianas.write(0); // Volver a la posición 0 (cerrar persianas)
+        isMovingPersianas = false;
+        Serial.println("Persianas cerradas");
+    }
+
+    if (isMovingRiego && millis() - servoMoveStartTime > 5000)
+    {                        // 5 segundos
+        servoRiego.write(0); // Volver a la posición 0 (cerrar válvula de riego)
+        isMovingRiego = false;
+        Serial.println("Riego desactivado");
+    }
+}
+
+void setup()
+{
+    // Inicialización de pines
+    Serial.begin(115200);
+    servoPersianas.attach(SERVO_PERSIANAS_PIN);
+    servoRiego.attach(SERVO_RIEGO_PIN);
+
+    connectWiFi();
+    connectToMQTT();
+    client.setCallback(callback); // Establecer el callback de MQTT
+}
+
+void loop()
+{
+    client.loop(); // Mantener la conexión MQTT
+
+    if (!client.connected())
+    {
+        connectToMQTT();
+    }
+    // Llamar a la función de movimiento de servos
+    moveServos();
 }
