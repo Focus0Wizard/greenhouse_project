@@ -1,0 +1,23 @@
+@startuml
+actor Usuario
+participant Invernadero
+participant LDR
+participant DHT11
+participant DynamoDB
+participant MQTT
+participant Servo
+participant AWS_IoT
+
+Usuario -> Invernadero : Solicita monitoreo de sensores
+Invernadero -> LDR : Llamar readData()
+LDR -> Invernadero : Devuelve nivel de luz
+Invernadero -> DHT11 : Llamar readTemperature() y readHumidity()
+DHT11 -> Invernadero : Devuelve temperatura y humedad
+Invernadero -> DynamoDB : Guardar datos de sensores en DynamoDB
+DynamoDB -> Invernadero : Confirma almacenamiento
+Invernadero -> MQTT : Publicar datos de sensores a AWS IoT
+MQTT -> AWS_IoT : Publicar en topic "$aws/things/greenhouse_0001/shadow/update"
+AWS_IoT -> MQTT : Confirma publicación
+Invernadero -> Servo : Controlar servos (persianas o riego)
+Servo -> Invernadero : Confirma acción
+@enduml
