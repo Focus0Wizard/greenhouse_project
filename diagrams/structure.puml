@@ -1,0 +1,42 @@
+@startuml
+class Sensor {
+  +readData() : float
+  +getState() : int
+}
+
+class LDR {
+  +readData() : float
+  +getState() : int
+}
+
+class DHT11 {
+  +readTemperature() : float
+  +readHumidity() : float
+  +getState() : int
+}
+
+class Actuator {
+  +activate() : void
+  +deactivate() : void
+}
+
+class Servo {
+  +moveTo(position: int) : void
+}
+
+class Invernadero {
+  -ldr : LDR
+  -dht11 : DHT11
+  -servoPersianas : Servo
+  -servoRiego : Servo
+  +monitorSensors() : void
+  +controlActuators() : void
+}
+
+Sensor <|-- LDR
+Sensor <|-- DHT11
+Actuator <|-- Servo
+Invernadero --> LDR
+Invernadero --> DHT11
+Invernadero --> Servo
+@enduml
