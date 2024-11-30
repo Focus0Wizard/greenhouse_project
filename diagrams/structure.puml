@@ -33,10 +33,18 @@ class Invernadero {
   +controlActuators() : void
 }
 
+class MQTT {
+  +connect() : bool
+  +publish(topic: String, payload: String) : void
+  +subscribe(topic: String) : void
+  +receiveMessage() : String
+}
+
 Sensor <|-- LDR
 Sensor <|-- DHT11
 Actuator <|-- Servo
 Invernadero --> LDR
 Invernadero --> DHT11
 Invernadero --> Servo
+Invernadero --> MQTT
 @enduml
