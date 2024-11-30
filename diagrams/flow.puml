@@ -1,0 +1,19 @@
+@startuml
+start
+:Iniciar monitoreo de sensores;
+:Leer datos de LDR;
+:Leer datos de DHT11 (temperatura, humedad);
+:Almacenar datos en DynamoDB;
+:Publicar datos en MQTT (AWS IoT);
+if (¿Nivel de luz bajo?) then (sí)
+  :Activar servo para abrir persianas;
+else (no)
+  :Activar servo para cerrar persianas;
+endif
+if (¿Temperatura > 20°C?) then (sí)
+  :Activar servo para abrir válvula de riego;
+else (no)
+  :Activar servo para cerrar válvula de riego;
+endif
+stop
+@enduml
