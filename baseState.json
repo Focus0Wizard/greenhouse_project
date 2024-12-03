@@ -1,12 +1,11 @@
 {
-    "state": {
-      "reported": {
-        "tempState": 0,
-        "luxState": 0,
-        "humidityState": 0,
-        "vent_state": 0,
-        "irrigation_state": 0,
-        "mode": 0
-      }
+  "state": {
+    "reported": {
+      "tempState": 0,
+      "luxState": 0,
+      "vent_state": 0,
+      "irrigation_state": 0,
+      "mode": 0
     }
   }
+}
