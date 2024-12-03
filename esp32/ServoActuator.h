@@ -19,9 +19,9 @@ public:
 
     void moveTo(int angle)
     {
-        Serial.print("Moviendo servo en el pin ");
+        Serial.print("Moving servo to pin ");
         Serial.print(pin);
-        Serial.print(" a: ");
+        Serial.print(" to: ");
         Serial.println(angle);
         servo.write(angle);
         currentAngle = angle;
