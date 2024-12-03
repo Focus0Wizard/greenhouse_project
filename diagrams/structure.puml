@@ -24,12 +24,17 @@ class Servo {
   +moveTo(position: int) : void
 }
 
-class Invernadero {
+class GreenhouseSensor {
   -ldr : LDR
   -dht11 : DHT11
+  -mqtt : MQTT
+  +monitorSensors() : void
+}
+
+class GreenhouseActuator {
   -servoPersianas : Servo
   -servoRiego : Servo
-  +monitorSensors() : void
+  -mqtt : MQTT
   +controlActuators() : void
 }
 
@@ -43,8 +48,11 @@ class MQTT {
 Sensor <|-- LDR
 Sensor <|-- DHT11
 Actuator <|-- Servo
-Invernadero --> LDR
-Invernadero --> DHT11
-Invernadero --> Servo
-Invernadero --> MQTT
+
+GreenhouseSensor --> LDR
+GreenhouseSensor --> DHT11
+GreenhouseSensor --> MQTT
+
+GreenhouseActuator --> Servo
+GreenhouseActuator --> MQTT
 @enduml

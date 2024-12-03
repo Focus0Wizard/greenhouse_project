@@ -1,6 +1,7 @@
 @startuml
-actor Usuario
-participant Greenhouse
+actor User
+participant GreenhouseSensor
+participant GreenhouseActuator
 participant LDR
 participant DHT11
 participant DynamoDB
@@ -8,16 +9,29 @@ participant MQTT
 participant Servo
 participant AWS_IoT
 
-User -> Greenhouse : Request sensor monitoring
-Greenhouse -> LDR : Call readData()
-LDR -> Greenhouse : Returns light level
-Greenhouse -> DHT11 : Call readTemperature() and readHumidity()
-DHT11 -> Greenhouse : Returns temperature and humidity
-Greenhouse -> DynamoDB : Save sensor data in DynamoDB
-DynamoDB -> Greenhouse : Confirm storage
-Greenhouse -> MQTT : Publish sensor data to AWS IoT
+== Sensor Monitoring ==
+User -> GreenhouseSensor : Request sensor monitoring
+GreenhouseSensor -> LDR : Call readData()
+LDR -> GreenhouseSensor : Returns light level
+GreenhouseSensor -> DHT11 : Call readTemperature() and readHumidity()
+DHT11 -> GreenhouseSensor : Returns temperature and humidity
+GreenhouseSensor -> DynamoDB : Save sensor data in DynamoDB
+DynamoDB -> GreenhouseSensor : Confirm storage
+GreenhouseSensor -> MQTT : Publish sensor data to AWS IoT
 MQTT -> AWS_IoT : Post in topic "$aws/things/greenhouse_0001/shadow/update"
 AWS_IoT -> MQTT : Confirms publication
-Greenhouse -> Servo : Control servos (blinds or irrigation)
-Servo -> Greenhouse : Confirms action
+
+== Actuator Control ==
+GreenhouseSensor -> GreenhouseActuator : Notify sensor data update
+GreenhouseActuator -> Servo : Control servos (blinds or irrigation)
+Servo -> GreenhouseActuator : Confirms action
+GreenhouseActuator -> MQTT : Publish actuator status to AWS IoT
+MQTT -> AWS_IoT : Post actuator status
+AWS_IoT -> MQTT : Confirms publication
+
+== Integration with Alexa ==
+User -> AWS_IoT : Query greenhouse status via Alexa
+AWS_IoT -> MQTT : Retrieve latest sensor and actuator data
+MQTT -> AWS_IoT : Returns data
+AWS_IoT -> User : Provide updated status
 @enduml
