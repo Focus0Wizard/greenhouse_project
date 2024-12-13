@@ -21,8 +21,7 @@ private:
   static void internalCallback(char *topic, byte *payload, unsigned int length)
   {
     MQTTClient *instance = (MQTTClient *)PubSubClient::getDefaultCallbackObject();
-    if (!instance)
-      return;
+    if (!instance) return;
 
     instance->handleCallback(topic, payload, length);
   }

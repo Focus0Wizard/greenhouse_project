@@ -15,10 +15,7 @@ public:
   void connect()
   {
     WiFi.begin(ssid, password);
-    while (WiFi.status() != WL_CONNECTED)
-    {
-      delay(500);
-    }
+    while (WiFi.status() != WL_CONNECTED) delay(500);
   }
 
   bool isConnected()

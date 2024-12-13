@@ -21,16 +21,14 @@ public:
   float readData() override
   {
     float t = dht.readTemperature();
-    if (!isnan(t))
-      lastTemp = t;
+    if (!isnan(t)) lastTemp = t;
     return lastTemp;
   }
 
   int getState() override
   {
-    // Estado 0: temp < 25°C
-    // Estado 1: temp >= 25°C
-    return (lastTemp < 25.0) ? 0 : 1;
+    if (lastTemp > 0.0 && lastTemp < 25.0) return 0; 
+    else if (lastTemp >= 25.0 && lastTemp < 35.0) return 1; 
   }
 };
 
