@@ -1,37 +1,37 @@
+#ifndef DHT11_H
+#define DHT11_H
+
 #include "Sensor.h"
 #include <DHT.h>
 
-class DHTSensor : public Sensor
+class DHT11Sensor : public Sensor
 {
 private:
-    DHT dht;
-    int tempThresholdLow;
-    int tempThresholdHigh;
+  DHT dht;
+  float lastTemp;
 
 public:
-    DHTSensor(int dhtPin, int type, int threshLow = 25, int threshHigh = 35)
-        : dht(dhtPin, type), tempThresholdLow(threshLow), tempThresholdHigh(threshHigh)
-    {
-        dht.begin();
-    }
+  DHT11Sensor(int pin) : dht(pin, DHT11), lastTemp(-1) {}
 
-    float readTemperature()
-    {
-        return dht.readTemperature();
-    }
+  void begin()
+  {
+    dht.begin();
+  }
 
-    float readHumidity()
-    {
-        return dht.readHumidity();
-    }
+  float readData() override
+  {
+    float t = dht.readTemperature();
+    if (!isnan(t))
+      lastTemp = t;
+    return lastTemp;
+  }
 
-    int getState() override
-    {
-        float temp = readTemperature();
-        if (temp > 0.0 && temp < tempThresholdLow)
-            return 0;
-        else if (temp >= tempThresholdLow && temp < tempThresholdHigh)
-            return 1;
-        return -1;
-    }
+  int getState() override
+  {
+    // Estado 0: temp < 25°C
+    // Estado 1: temp >= 25°C
+    return (lastTemp < 25.0) ? 0 : 1;
+  }
 };
+
+#endif

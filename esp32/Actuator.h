@@ -1,3 +1,6 @@
+#ifndef ACTUATOR_H
+#define ACTUATOR_H
+
 class Actuator
 {
 public:
@@ -5,3 +8,5 @@ public:
     virtual void deactivate() = 0;
     virtual ~Actuator() {}
 };
+
+#endif
