@@ -1,4 +1,13 @@
 @startuml
+class Greenhouse {
+  -ldr : LDR
+  -dht11 : DHT11
+  -servoPersianas : Servo
+  -servoRiego : Servo
+  -mqtt : MQTT
+  +monitorAndControl() : void
+}
+
 class Sensor {
   +readData() : float
   +getState() : int
@@ -24,35 +33,27 @@ class Servo {
   +moveTo(position: int) : void
 }
 
-class GreenhouseSensor {
-  -ldr : LDR
-  -dht11 : DHT11
-  -mqtt : MQTT
-  +monitorSensors() : void
-}
-
-class GreenhouseActuator {
-  -servoPersianas : Servo
-  -servoRiego : Servo
-  -mqtt : MQTT
-  +controlActuators() : void
-}
-
 class MQTT {
+  -wifiManager : WifiManager
   +connect() : bool
   +publish(topic: String, payload: String) : void
   +subscribe(topic: String) : void
   +receiveMessage() : String
 }
 
+class WifiManager {
+  +setNetwork(ssid: String, password: String) : void
+  +connect() : bool
+}
+
 Sensor <|-- LDR
 Sensor <|-- DHT11
 Actuator <|-- Servo
 
-GreenhouseSensor --> LDR
-GreenhouseSensor --> DHT11
-GreenhouseSensor --> MQTT
+Greenhouse --> LDR
+Greenhouse --> DHT11
+Greenhouse --> Servo
+Greenhouse --> MQTT
 
-GreenhouseActuator --> Servo
-GreenhouseActuator --> MQTT
+MQTT --> WifiManager
 @enduml

@@ -1,7 +1,6 @@
 @startuml
 actor User
-participant GreenhouseSensor
-participant GreenhouseActuator
+participant Greenhouse
 participant LDR
 participant DHT11
 participant DynamoDB
@@ -10,22 +9,21 @@ participant Servo
 participant AWS_IoT
 
 == Sensor Monitoring ==
-User -> GreenhouseSensor : Request sensor monitoring
-GreenhouseSensor -> LDR : Call readData()
-LDR -> GreenhouseSensor : Returns light level
-GreenhouseSensor -> DHT11 : Call readTemperature() and readHumidity()
-DHT11 -> GreenhouseSensor : Returns temperature and humidity
-GreenhouseSensor -> DynamoDB : Save sensor data in DynamoDB
-DynamoDB -> GreenhouseSensor : Confirm storage
-GreenhouseSensor -> MQTT : Publish sensor data to AWS IoT
+User -> Greenhouse : Request sensor monitoring
+Greenhouse -> LDR : Call readData()
+LDR -> Greenhouse : Returns light level
+Greenhouse -> DHT11 : Call readTemperature() and readHumidity()
+DHT11 -> Greenhouse : Returns temperature and humidity
+Greenhouse -> DynamoDB : Save sensor data in DynamoDB
+DynamoDB -> Greenhouse : Confirm storage
+Greenhouse -> MQTT : Publish sensor data to AWS IoT
 MQTT -> AWS_IoT : Post in topic "$aws/things/greenhouse_0001/shadow/update"
 AWS_IoT -> MQTT : Confirms publication
 
 == Actuator Control ==
-GreenhouseSensor -> GreenhouseActuator : Notify sensor data update
-GreenhouseActuator -> Servo : Control servos (blinds or irrigation)
-Servo -> GreenhouseActuator : Confirms action
-GreenhouseActuator -> MQTT : Publish actuator status to AWS IoT
+Greenhouse -> Servo : Control servos (blinds or irrigation)
+Servo -> Greenhouse : Confirms action
+Greenhouse -> MQTT : Publish actuator status to AWS IoT
 MQTT -> AWS_IoT : Post actuator status
 AWS_IoT -> MQTT : Confirms publication
 
