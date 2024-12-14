@@ -1,4 +1,18 @@
 @startuml
+
+class Greenhouse {
+  -ldr : LDR
+  -dht : DHT11Sensor
+  -persianas : ServoActuator
+  -riego : ServoActuator
+  -wifi : WifiManager
+  -mqtt : MQTTClient
+  -currentLuxState : int
+  -currentTempState : int
+  +begin() : void
+  +monitorAndControl() : void
+}
+
 class Sensor {
   +readData() : float
   +getState() : int
@@ -9,9 +23,9 @@ class LDR {
   +getState() : int
 }
 
-class DHT11 {
-  +readTemperature() : float
-  +readHumidity() : float
+class DHT11Sensor {
+  +begin() : void
+  +readData() : float
   +getState() : int
 }
 
@@ -20,39 +34,33 @@ class Actuator {
   +deactivate() : void
 }
 
-class Servo {
+class ServoActuator {
+  +attach() : void
+  +activate() : void
+  +deactivate() : void
   +moveTo(position: int) : void
 }
 
-class GreenhouseSensor {
-  -ldr : LDR
-  -dht11 : DHT11
-  -mqtt : MQTT
-  +monitorSensors() : void
+class WifiManager {
+  +connect() : void
+  +isConnected() : bool
 }
 
-class GreenhouseActuator {
-  -servoPersianas : Servo
-  -servoRiego : Servo
-  -mqtt : MQTT
-  +controlActuators() : void
-}
-
-class MQTT {
-  +connect() : bool
-  +publish(topic: String, payload: String) : void
-  +subscribe(topic: String) : void
-  +receiveMessage() : String
+class MQTTClient {
+  +setCallback(cb: function) : void
+  +connect(clientId: const char*) : bool
+  +loop() : void
+  +publishState(luxState: int, tempState: int) : void
 }
 
 Sensor <|-- LDR
-Sensor <|-- DHT11
-Actuator <|-- Servo
+Sensor <|-- DHT11Sensor
+Actuator <|-- ServoActuator
 
-GreenhouseSensor --> LDR
-GreenhouseSensor --> DHT11
-GreenhouseSensor --> MQTT
+Greenhouse --> LDR
+Greenhouse --> DHT11Sensor
+Greenhouse --> ServoActuator
+MQTTClient --> WifiManager
+Greenhouse --> MQTTClient
 
-GreenhouseActuator --> Servo
-GreenhouseActuator --> MQTT
 @enduml

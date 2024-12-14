@@ -1,22 +1,36 @@
+#ifndef LDR_H
+#define LDR_H
+
 #include "Sensor.h"
+#include <Arduino.h>
 
 class LDR : public Sensor
 {
 private:
-    int pin;
-    int threshold;
+  int pin;       
+  int threshold; 
+  int lastValue; 
 
 public:
-    LDR(int ldrPin, int thresh = 500) : pin(ldrPin), threshold(thresh) {}
+  LDR(int pin, int threshold = 500) : pin(pin), threshold(threshold), lastValue(-1) {}
 
-    float readData() override
-    {
-        return analogRead(pin);
-    }
+  void initialize()
+  {
+    pinMode(pin, INPUT);
+  }
 
-    int getState() override
-    {
-        float value = readData();
-        return (value < threshold) ? 0 : 1;
-    }
+  float readData() override
+  {
+    lastValue = analogRead(pin);
+    return lastValue;
+  }
+
+  int getState() override
+  {
+    // Estado 1: Alta luz (valor analógico bajo)
+    // Estado 0: Baja luz (valor analógico alto)
+    return (lastValue < threshold) ? 1 : 0;
+  }
 };
+
+#endif
