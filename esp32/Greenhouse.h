@@ -14,8 +14,8 @@ private:
   LDR ldr;
   DHTSensor dht;
 
-  ServoActuator persianas;
-  ServoActuator riego;
+  ServoActuator blinds;
+  ServoActuator irrigation;
 
   WifiManager wifi;
   MQTTClient mqtt;
@@ -32,19 +32,19 @@ private:
 
   void updateActuators(int luxState, int tempState)
   {
-    if (luxState == 1) persianas.deactivate(); // Luz alta -> cerrar persianas
-    else persianas.activate(); // Luz baja -> abrir persianas
+    if (luxState == 1) blinds.deactivate(); // Luz alta -> cerrar persianas
+    else blinds.activate(); // Luz baja -> abrir persianas
 
-    if (tempState == 1) riego.activate(); // Temperatura alta -> activar riego
-    else riego.deactivate(); // Temperatura baja -> desactivar riego
+    if (tempState == 1) irrigation.activate(); // Temperatura alta -> activar riego
+    else irrigation.deactivate(); // Temperatura baja -> desactivar riego
   }
 
 public:
   Greenhouse()
       : ldr(LDR_PIN, LDR_THRESHOLD),
         dht(DHT11_PIN, DHT11_TYPE),
-        persianas(BLIND_PIN, BLIND_ACTIVE_POSITION, BLIND_INACTIVE_POSITION),
-        riego(IRRIGATION_PIN, IRRIGATION_ACTIVE_POSITION_PIN, IRRIGATION_INACTIVE_POSITION),
+        blinds(BLIND_PIN, BLIND_ACTIVE_POSITION, BLIND_INACTIVE_POSITION),
+        irrigation(IRRIGATION_PIN, IRRIGATION_ACTIVE_POSITION_PIN, IRRIGATION_INACTIVE_POSITION),
         wifi(WIFI_SSID, WIFI_PASS),
         mqtt(MQTT_BROKER, MQTT_PORT, AMAZON_ROOT_CA1, CERTIFICATE, PRIVATE_KEY, CLIENT_ID),
         currentLuxState(INVALID_STATE),
@@ -55,8 +55,8 @@ public:
     Serial.begin(115200);
     wifi.connect();
     dht.initialize();
-    persianas.initialize();
-    riego.initialize();
+    blinds.initialize();
+    irrigation.initialize();
 
     mqtt.setCallback(onShadowUpdate);
     mqtt.connect(CLIENT_ID);

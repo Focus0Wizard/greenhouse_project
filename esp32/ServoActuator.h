@@ -9,29 +9,29 @@ class ServoActuator : public Actuator
 private:
   Servo servo;     
   int pin;         
-  int activePos;   
-  int inactivePos; 
+  int activePosition;   
+  int inactivePosition; 
 
 public:
-  ServoActuator(int pin, int activePos, int inactivePos) 
+  ServoActuator(int pin, int activePosition, int inactivePosition) 
     : pin(pin), 
-      activePos(activePos), 
-      inactivePos(inactivePos) {}
+      activePosition(activePosition), 
+      inactivePosition(inactivePosition) {}
 
   void initialize()
   {
     servo.attach(pin);
-    servo.write(inactivePos); 
+    servo.write(inactivePosition); 
   }
 
   void activate() override
   {
-    servo.write(activePos);
+    servo.write(activePosition);
   }
 
   void deactivate() override
   {
-    servo.write(inactivePos);
+    servo.write(inactivePosition);
   }
 
   void moveTo(int position)
