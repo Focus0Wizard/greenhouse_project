@@ -49,8 +49,8 @@ private:
 public:
   MQTTClient(const char *broker, int port, const char *rootCA, const char *cert, const char *key, const char *clientId)
       : prevLdrState(-1), 
-      prevDhtState(-1), 
-      userCallback(nullptr)
+        prevDhtState(-1), 
+        userCallback(nullptr)
   {
     wifiClient.setCACert(rootCA);
     wifiClient.setCertificate(cert);

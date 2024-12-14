@@ -12,7 +12,10 @@ private:
   int lastValue; 
 
 public:
-  LDR(int pin, int threshold = 500) : pin(pin), threshold(threshold), lastValue(-1) {}
+  LDR(int pin, int threshold = 500) 
+      : pin(pin), 
+        threshold(threshold), 
+        lastValue(-1) {}
 
   void initialize()
   {

@@ -11,8 +11,8 @@ private:
 
 public:
   WifiManager(const char *ssid, const char *password) 
-  : ssid(ssid), 
-  password(password) {}
+      : ssid(ssid), 
+        password(password) {}
 
   void connect()
   {

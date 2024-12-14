@@ -13,9 +13,10 @@ private:
   int inactivePos; 
 
 public:
-  ServoActuator(int pin, int activePos, int inactivePos) : pin(pin), 
-                                                           activePos(activePos), 
-                                                           inactivePos(inactivePos) {}
+  ServoActuator(int pin, int activePos, int inactivePos) 
+    : pin(pin), 
+      activePos(activePos), 
+      inactivePos(inactivePos) {}
 
   void initialize()
   {

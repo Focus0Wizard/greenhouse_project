@@ -1,6 +1,5 @@
 #ifndef DHTSENSOR_H
 #define DHTSENSOR_H
-#define DHT_TYPE DHT11
 
 #include "Sensor.h"
 #include <DHT.h>
@@ -12,8 +11,9 @@ private:
   float lastTemp; 
 
 public:
-  DHTSensor(int pin, int type) : dht(pin, DHT_TYPE), 
-                                 lastTemp(-1) {}
+  DHTSensor(int pin, int type) 
+    : dht(pin, type), 
+      lastTemp(-1) {}
 
   void initialize()
   {

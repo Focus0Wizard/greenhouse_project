@@ -2,7 +2,7 @@
 #define GREENHOUSE_H
 
 #include "LDR.h"
-#include "DHT11.h"
+#include "DHTSensor.h"
 #include "ServoActuator.h"
 #include "MQTTClient.h"
 #include "WifiManager.h"
@@ -12,7 +12,7 @@ class Greenhouse
 {
 private:
   LDR ldr;
-  DHT11Sensor dht;
+  DHTSensor dht;
 
   ServoActuator persianas;
   ServoActuator riego;
@@ -32,44 +32,31 @@ private:
 
   void updateActuators(int luxState, int tempState)
   {
-      // Luz alta -> cerrar persianas
-    if (luxState == 1) persianas.deactivate();
+    if (luxState == 1) persianas.deactivate(); // Luz alta -> cerrar persianas
+    else persianas.activate(); // Luz baja -> abrir persianas
 
-    
-    // Luz baja -> abrir persianas
-    else persianas.activate();
-
-    if (tempState == 1) // Temperatura alta -> activar riego
-    {
-      riego.activate();
-      delay(3000);
-      riego.moveTo(90); // posición neutral
-    }
-    else // Temperatura baja -> desactivar riego
-    {
-      riego.deactivate();
-      delay(3000);
-      riego.moveTo(90);
-    }
+    if (tempState == 1) riego.activate(); // Temperatura alta -> activar riego
+    else riego.deactivate(); // Temperatura baja -> desactivar riego
   }
 
 public:
-  Greenhouse() : ldr(34, 500),
-                 dht(4),
-                 persianas(22, 120, 0),
-                 riego(26, 60, 120),
-                 wifi(WIFI_SSID, WIFI_PASS),
-                 mqtt(MQTT_BROKER, MQTT_PORT, AMAZON_ROOT_CA1, CERTIFICATE, PRIVATE_KEY, CLIENT_ID),
-                 currentLuxState(-1),
-                 currentTempState(-1) {}
+  Greenhouse()
+      : ldr(LDR_PIN, LDR_THRESHOLD),
+        dht(DHT11_PIN, DHT11_TYPE),
+        persianas(BLIND_PIN, BLIND_ACTIVE_POSITION, BLIND_INACTIVE_POSITION),
+        riego(IRRIGATION_PIN, IRRIGATION_ACTIVE_POSITION_PIN, IRRIGATION_INACTIVE_POSITION),
+        wifi(WIFI_SSID, WIFI_PASS),
+        mqtt(MQTT_BROKER, MQTT_PORT, AMAZON_ROOT_CA1, CERTIFICATE, PRIVATE_KEY, CLIENT_ID),
+        currentLuxState(INVALID_STATE),
+        currentTempState(INVALID_STATE) {}
 
   void begin()
   {
     Serial.begin(115200);
     wifi.connect();
-    dht.begin();
-    persianas.attach();
-    riego.attach();
+    dht.initialize();
+    persianas.initialize();
+    riego.initialize();
 
     mqtt.setCallback(onShadowUpdate);
     mqtt.connect(CLIENT_ID);
@@ -85,7 +72,13 @@ public:
     int newLuxState = ldr.getState();
     int newTempState = dht.getState();
 
-    mqtt.publishState(newLuxState, newTempState);
+    if (newLuxState != currentLuxState || newTempState != currentTempState)
+    {
+      currentLuxState = newLuxState;
+      currentTempState = newTempState;
+
+      mqtt.publishState(newLuxState, newTempState);
+    }
   }
 };
 
