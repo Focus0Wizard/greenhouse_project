@@ -10,7 +10,9 @@ private:
   const char *password;
 
 public:
-  WifiManager(const char *_ssid, const char *_password) : ssid(_ssid), password(_password) {}
+  WifiManager(const char *ssid, const char *password) 
+  : ssid(ssid), 
+  password(password) {}
 
   void connect()
   {

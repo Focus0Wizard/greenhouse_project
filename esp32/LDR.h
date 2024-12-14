@@ -7,25 +7,28 @@
 class LDR : public Sensor
 {
 private:
-  int pin;
-  int threshold;
-  float lastValue;
+  int pin;       
+  int threshold; 
+  int lastValue; 
 
 public:
-  LDR(int _pin, int _threshold = 500) : pin(_pin), threshold(_threshold), lastValue(-1) {}
+  LDR(int pin, int threshold = 500) : pin(pin), threshold(threshold), lastValue(-1) {}
+
+  void initialize()
+  {
+    pinMode(pin, INPUT);
+  }
 
   float readData() override
   {
-    int val = analogRead(pin);
-    lastValue = val;
-    return val;
+    lastValue = analogRead(pin);
+    return lastValue;
   }
 
   int getState() override
   {
-    // Estado 0: Bajo nivel de luz (valor alto de LDR)
-    // Estado 1: Alto nivel de luz (valor bajo de LDR)
-    // si val < threshold => luz alta
+    // Estado 1: Alta luz (valor analógico bajo)
+    // Estado 0: Baja luz (valor analógico alto)
     return (lastValue < threshold) ? 1 : 0;
   }
 };

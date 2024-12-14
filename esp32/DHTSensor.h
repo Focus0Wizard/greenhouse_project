@@ -1,34 +1,37 @@
-#ifndef DHT11_H
-#define DHT11_H
+#ifndef DHTSENSOR_H
+#define DHTSENSOR_H
+#define DHT_TYPE DHT11
 
 #include "Sensor.h"
 #include <DHT.h>
 
-class DHT11Sensor : public Sensor
+class DHTSensor : public Sensor
 {
 private:
-  DHT dht;
-  float lastTemp;
+  DHT dht;        
+  float lastTemp; 
 
 public:
-  DHT11Sensor(int pin) : dht(pin, DHT11), lastTemp(-1) {}
+  DHTSensor(int pin, int type) : dht(pin, DHT_TYPE), 
+                                 lastTemp(-1) {}
 
-  void begin()
+  void initialize()
   {
     dht.begin();
   }
 
   float readData() override
   {
-    float t = dht.readTemperature();
-    if (!isnan(t)) lastTemp = t;
+    float temp = dht.readTemperature();
+    if (!isnan(temp)) lastTemp = temp; 
     return lastTemp;
   }
 
   int getState() override
   {
     if (lastTemp > 0.0 && lastTemp < 25.0) return 0; 
-    else if (lastTemp >= 25.0 && lastTemp < 35.0) return 1; 
+    else if (lastTemp >= 25.0 && lastTemp < 35.0) return 1;
+    else return -1; 
   }
 };
 
