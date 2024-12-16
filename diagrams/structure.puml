@@ -1,66 +1,51 @@
 @startuml
-
 class Greenhouse {
-  -ldr : LDR
-  -dht : DHT11Sensor
-  -persianas : ServoActuator
-  -riego : ServoActuator
-  -wifi : WifiManager
-  -mqtt : MQTTClient
-  -currentLuxState : int
-  -currentTempState : int
-  +begin() : void
-  +monitorAndControl() : void
+  - LDR ldr
+  - DHT11Sensor dht
+  - ServoActuator persianas
+  - ServoActuator riego
+  - MQTTClient mqtt
+  - int currentLuxState
+  - int currentTempState
+  + monitorAndControl()
+  + begin()
 }
 
 class Sensor {
-  +readData() : float
-  +getState() : int
+  + readData() : float
+  + getState() : int
 }
 
-class LDR {
-  +readData() : float
-  +getState() : int
+class LDR extends Sensor {
+  + readData() : float
+  + getState() : int
 }
 
-class DHT11Sensor {
-  +begin() : void
-  +readData() : float
-  +getState() : int
+class DHT11Sensor extends Sensor {
+  + readData() : float
+  + getState() : int
 }
 
 class Actuator {
-  +activate() : void
-  +deactivate() : void
+  + activate() : void
+  + deactivate() : void
 }
 
-class ServoActuator {
-  +attach() : void
-  +activate() : void
-  +deactivate() : void
-  +moveTo(position: int) : void
-}
-
-class WifiManager {
-  +connect() : void
-  +isConnected() : bool
+class ServoActuator extends Actuator {
+  + activate() : void
+  + deactivate() : void
+  + moveTo(pos: int) : void
 }
 
 class MQTTClient {
-  +setCallback(cb: function) : void
-  +connect(clientId: const char*) : bool
-  +loop() : void
-  +publishState(luxState: int, tempState: int) : void
+  + setCallback(cb: void(*)(int, int)) : void
+  + connect(clientId: const char*) : bool
+  + loop() : void
+  + publishState(luxState: int, tempState: int) : void
 }
-
-Sensor <|-- LDR
-Sensor <|-- DHT11Sensor
-Actuator <|-- ServoActuator
 
 Greenhouse --> LDR
 Greenhouse --> DHT11Sensor
-Greenhouse --> ServoActuator
-MQTTClient --> WifiManager
+Greenhouse --> ServoActuator 
 Greenhouse --> MQTTClient
-
 @enduml
